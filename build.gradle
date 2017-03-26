@@ -1,0 +1,105 @@
+buildscript {
+    ext {
+
+    }
+    repositories {
+        jcenter()
+    }
+    dependencies {
+
+    }
+}
+
+plugins {
+    id 'java'
+    id 'application'
+    id 'idea'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'findbugs'
+    id 'pmd'
+    id 'project-report'
+    id 'war'
+    id "com.moowork.grunt" version "1.0.1"
+    id "com.moowork.node" version "1.0.1"
+    id "org.sonarqube" version "2.2.1"
+}
+
+allprojects {
+    version = "0.0.0"
+}
+
+subprojects {
+
+
+
+    // ソースと実行ファイルのJava バージョン
+    def jdkVersion = 1.8
+    sourceCompatibility = jdkVersion
+    targetCompatibility = jdkVersion
+    def defaultEncoding = 'UTF-8'
+    tasks.withType(AbstractCompile).each { it.options.encoding = defaultEncoding }
+
+    javadoc {
+        options.charSet = defaultEncoding
+        options.encoding = defaultEncoding
+        options.addBooleanOption('Xdoclint:none', true)
+    }
+
+
+
+    repositories {
+        jcenter()
+    }
+
+    configurations {
+        checkerFrameworkAnnotatedJDK
+        annotationProcessors
+    }
+    dependencies {
+
+
+
+    }
+
+    compileJava {
+        def processors = [
+                'org.checkerframework.checker.nullness.NullnessChecker',
+                'lombok.launch.AnnotationProcessorHider\$AnnotationProcessor',
+        ]
+// CheckerFramework 不具合
+//        options.compilerArgs = [
+//                '-processor', processors.join(','),
+//                '-processorpath', "${configurations.annotationProcessors.asPath}",
+//                '-AprintErrorStack',
+//                "-Xbootclasspath/p:${configurations.checkerFrameworkAnnotatedJDK.asPath}",
+//                '-Xlint:unchecked'
+//        ]
+    }
+
+    idea {
+        module {
+            scopes.PROVIDED.plus += [configurations.annotationProcessors]
+        }
+    }
+}
+
+sonarqube {
+    properties {
+        property "sonar.host.url", "http://localhost:9000/"
+        property "sonar.jdbc.driverClassName", "com.mysql.jdbc.Driver"
+        property "sonar.jacoco.reportPath", "${project.buildDir}/jacoco/test.exec"
+    }
+}
+
+pmd {
+    ruleSets = [
+            'java-braces',
+            'java-codesize',
+    ]
+}
+
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.3'
+}
